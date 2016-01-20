@@ -1,3 +1,7 @@
+
+//Name: Tien Tran
+//SID: 86104581
+
 // CSC 270 simulation example
 // Adapted March 1996 by J. Clarke from Turing original by M. Molle
 
@@ -97,6 +101,7 @@ randStream::randStream (unsigned short seed)
 #endif
 }
 
+
 //-----------------------------------------------------------------------
 // Events
 //
@@ -122,21 +127,34 @@ public:
 	virtual void makeItHappen () {}; // the event routine
 };
 
+//Comparator class for eventClass
+class compareTime{
+public:
+	bool operator()(eventClass* lhs, eventClass* rhs) const {
+		//cout << "lhs: " << lhs->whatTime() << "  rhs: " << rhs->whatTime() << endl;
+		return lhs->whatTime() > rhs->whatTime();
+	}
+	
+};
+
 //--------------------------------------------------
 // The event list and utilities for manipulating it.
 //--------------------------------------------------
 
 class eventListClass {
 private:
-
+	priority_queue<eventClass*, vector<eventClass*>, compareTime> pq;
+	/*
 	struct eventListItem {
 		eventClass * data;
 		eventListItem * next;
 	};
 	eventListItem * firstEvent;
+	*/
 
 public:
-	eventListClass () {firstEvent = NULL;};
+	//eventListClass () {firstEvent = NULL;};
+	eventListClass () {};
 	void insert (eventClass * event);
 	eventClass * getNext ();
 };
@@ -145,6 +163,9 @@ eventListClass * eventList;
 
 void eventListClass::insert (eventClass * event)
 {
+	//cout << "event: " << event->whatTime() << endl;
+	pq.push(event);
+	/*
 	eventListItem * e = new eventListItem;
 	e -> data = event;
 
@@ -163,10 +184,19 @@ void eventListClass::insert (eventClass * event)
 		behind -> next = e;
 		e -> next = ahead;
 	}
+	*/
 }
 
 eventClass * eventListClass::getNext ()
 {
+	if(!(pq.empty())){
+		eventClass* tmp = pq.top();
+		pq.pop();
+		return tmp;
+	}
+	else
+		return NULL;
+	/*
 	// pre firstEvent not= NULL
 
 	if (firstEvent == NULL) {
@@ -181,6 +211,7 @@ eventClass * eventListClass::getNext ()
 	firstEvent = restOfList;
 
 	return eventToReturn;
+	*/
 }
 
 //---------------------------------------------------------------------------
@@ -371,7 +402,7 @@ void carQueueClass::insert (carClass * newestCar)
 	localQueueSize += 1;
 	
 	//Increase number of cars and check if max;
-	numCars++;
+	//numCars++;
 	
 }
 
