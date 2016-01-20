@@ -341,13 +341,16 @@ void pumpStandClass::releasePump (pumpClass *& P)
 
 class carQueueClass {
 private:
+	queue<carClass*> q;
+	/*
 	struct queueItem {
 		carClass * data;
 		queueItem * next;
 	};
-
+	
 	queueItem * firstWaitingCar, * lastWaitingCar;
 	int localQueueSize;
+	*/
 	double totalEmptyQueueTime;
 
 public:
@@ -362,20 +365,23 @@ carQueueClass * carQueue;
 
 carQueueClass::carQueueClass ()
 {
+	/*
 	firstWaitingCar = NULL;
 	lastWaitingCar = NULL;
 	localQueueSize = 0;
+	*/
 	totalEmptyQueueTime = 0.0;
 }
 
 int carQueueClass::queueSize ()
 {
-	return localQueueSize;
+	return q.size();
+	//return localQueueSize;
 }
 
 double carQueueClass::emptyTime ()
 {
-	if (localQueueSize > 0)
+	if (q.size() > 0)
 		return totalEmptyQueueTime;
 	else
 		return totalEmptyQueueTime + simulationTime;
@@ -383,11 +389,12 @@ double carQueueClass::emptyTime ()
 
 void carQueueClass::insert (carClass * newestCar)
 {
+	/*
 	queueItem * newQueueItem;
 	newQueueItem = new queueItem;
 	newQueueItem -> data = newestCar;
 	newQueueItem -> next = NULL;
-
+	
 	if (lastWaitingCar == NULL) {
 		// assert queueSize = 0
 		firstWaitingCar = newQueueItem;
@@ -400,7 +407,14 @@ void carQueueClass::insert (carClass * newestCar)
 
 	lastWaitingCar = newQueueItem;
 	localQueueSize += 1;
-	
+	*/
+	if(q.empty()){
+		q.push(newestCar);
+		totalEmptyQueueTime += simulationTime;
+	}
+	else
+		q.push(newestCar);
+
 	//Increase number of cars and check if max;
 	//numCars++;
 	
@@ -409,7 +423,7 @@ void carQueueClass::insert (carClass * newestCar)
 carClass * carQueueClass::getNext ()
 {
 	// pre queueSize > 0 and firstWaitingCar not= NULL
-
+	/*
 	if (firstWaitingCar == NULL) {
 		cout << "Error! car queue unexpectedly empty\n";
 		return NULL;
@@ -429,6 +443,20 @@ carClass * carQueueClass::getNext ()
 	}
 
 	return carToReturn;
+	*/
+
+	if(!q.empty()){
+		carClass* tmp = q.front();
+		q.pop();
+
+		if(q.size() == 0){
+			totalEmptyQueueTime -= simulationTime;
+		}
+
+		return tmp;
+	}
+	else
+		return NULL;
 }
 
 //-------------------------------------
