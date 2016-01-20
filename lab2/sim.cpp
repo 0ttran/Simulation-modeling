@@ -352,6 +352,7 @@ private:
 	int localQueueSize;
 	*/
 	double totalEmptyQueueTime;
+	int numCars;
 
 public:
 	carQueueClass ();
@@ -359,6 +360,7 @@ public:
 	double emptyTime ();
 	void insert (carClass * newestCar);
 	carClass * getNext ();
+	int getMaxCars();
 };
 
 carQueueClass * carQueue;
@@ -370,6 +372,7 @@ carQueueClass::carQueueClass ()
 	lastWaitingCar = NULL;
 	localQueueSize = 0;
 	*/
+	numCars = 0;
 	totalEmptyQueueTime = 0.0;
 }
 
@@ -415,8 +418,9 @@ void carQueueClass::insert (carClass * newestCar)
 	else
 		q.push(newestCar);
 
-	//Increase number of cars and check if max;
-	//numCars++;
+	//Update max cars 
+	if(q.size() >= numCars)
+		numCars = q.size();
 	
 }
 
@@ -459,13 +463,17 @@ carClass * carQueueClass::getNext ()
 		return NULL;
 }
 
+int carQueueClass::getMaxCars(){
+	return numCars;
+}
+
 //-------------------------------------
 // Collecting and displaying statistics
 //-------------------------------------
 
 class statsClass {
 private:
-	int TotalArrivals, customersServed, balkingCustomers;
+	int TotalArrivals, customersServed, balkingCustomers, maxCars;
 	double TotalLitresSold, TotalLitresMissed, TotalWaitingTime,
 		TotalServiceTime;
 
@@ -486,6 +494,7 @@ statsClass::statsClass ()
 	TotalArrivals = 0;
 	customersServed = 0;
 	balkingCustomers = 0;
+	maxCars = 0;
 	TotalLitresSold = 0.0;
 	TotalLitresMissed = 0.0;
 	TotalWaitingTime = 0.0;
@@ -524,7 +533,9 @@ void statsClass::snapshot ()
 		/ (pumpStand -> howManyPumps() * simulationTime));
 	printf ("%9.2f", TotalLitresSold * profit
 		- cost * pumpStand -> howManyPumps());
-	printf ("%7.2f\n", TotalLitresMissed * profit);
+	printf ("%7.2f", TotalLitresMissed * profit);
+
+	printf ("%5i\n", carQueue->getMaxCars());
 }
 
 //-----------------------------------------
@@ -730,13 +741,13 @@ int main()
 
 	// Print column headings for periodic progress reports and final report
 
-	printf ("%9s%7s%8s%9s%8s%7s%9s%7s%8s%7s\n", " Current", "Total ",
+	printf ("%9s%7s%8s%9s%8s%7s%9s%7s%8s%7s%6s\n", " Current", "Total ",
 		"NoQueue", "Car->Car", "Average", "Number", "Average", "Pump ",
-		"Total", " Lost ");
-	printf ("%9s%7s%8s%9s%8s%7s%9s%7s%8s%7s\n", "   Time ", "Cars ",
+		"Total", " Lost ", "Max");
+	printf ("%9s%7s%8s%9s%8s%7s%9s%7s%8s%7s%6s\n", "   Time ", "Cars ",
 		"Fraction", "  Time  ", " Litres ", "Balked", "  Wait ",
-		"Usage ", "Profit", "Profit");
-	for (int i = 0; i < 79; i++)
+		"Usage ", "Profit", "Profit", "Size");
+	for (int i = 0; i < 86; i++)
 		cout << "-";
 	cout << "\n";
 
