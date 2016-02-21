@@ -27,19 +27,24 @@ private:
     int index;
     double nextIndex;
     int moving;
+    int numMoves;
+
 public:
     car();
     int getSpeed();
     int getIndex();
+    int getMoves();
     void setSpeed(int spd);
     void setIndex(int indx);
     void setMoving(int flg);
+    void incMoves();
 };
  
 car::car(){
     speed = rand() % 5 + 2;
     index = 1;
     moving = 0;
+    numMoves = 0;
 }
 
 int car::getSpeed(){
@@ -48,6 +53,10 @@ int car::getSpeed(){
 
 int car::getIndex(){
     return index;
+}
+
+int car::getMoves(){
+    return numMoves;
 }
 
 void car::setSpeed(int spd){
@@ -62,10 +71,15 @@ void car::setMoving(int flg){
     moving = flg;
 }
 
+void car::incMoves(){
+    numMoves++;
+}
+
 double calculateD(int carIndex, int getNext, int speed);
 double getSpeed(double old_clock);
 double getWaitTime(int speed);
 void carProc(car* C, int flg);
+bool lookAhead(car* C);
 
 //Borrowed this function to handle negative numbers
 long long int mod(long long int a, long long int b) {
@@ -75,6 +89,7 @@ long long int mod(long long int a, long long int b) {
     return ret;
 }
 
+//Main process
 extern "C" void sim(){
     create("sim");
 
@@ -105,6 +120,7 @@ extern "C" void sim(){
     carList.clear();
 }
 
+//Car process, handles each individual car as it drives on the roadway
 void carProc(car* C, int flg){
     create("carProc");
     int speed = rand() % 5 + 2;
@@ -161,6 +177,7 @@ double calculateD(int carIndex, int getNext, int speed){
     }
 }
 
+//Returns the wait time for each specific speed
 double getWaitTime(int speed){
     if(speed == 1)
         return 1.5;
@@ -172,4 +189,30 @@ double getWaitTime(int speed){
         return 1/3;
     else if(speed == 5)
         return 1/4;
+}
+
+//Looks ahead of the car based on its monitoring range
+bool lookAhead(car* C){
+    int monitoringRange;
+    if(C->getSpeed() < 0 || C->getSpeed() > 5){
+        cout << "Invalid speed for monitoring range!" << endl;
+        return false;
+    }
+    else if(C->getSpeed() == 5)
+        monitoringRange = 4;
+    else if(C->getSpeed() == 4)
+        monitoringRange = 3;
+    else if(C->getSpeed() == 3 || C->getSpeed() == 2)
+        monitoringRange = 2;
+    else
+        monitoringRange = 1;
+
+    int i;
+    for(i = 1; i <= monitoringRange; i++){
+        if((*road)[(C->getIndex() + i) % cells].status() != 0)
+            return true;
+    }
+
+    return false;
+
 }
