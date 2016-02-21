@@ -19,29 +19,27 @@ double x;
 
 facility_set* road = new facility_set("road", cells);
 
-double calculateD(int carIndex, int getNext, int speed);
-double getSpeed(double old_clock);
-double getWaitTime(int speed);
-void carProc(int carMoves, int carIndex, int flg);
-
+//Car class that contains sits index, speed, movingstatus
 class car{
 
 private:
     int speed;
     int index;
     double nextIndex;
-
+    int moving;
 public:
     car();
     int getSpeed();
     int getIndex();
     void setSpeed(int spd);
     void setIndex(int indx);
+    void setMoving(int flg);
 };
-
+ 
 car::car(){
     speed = rand() % 5 + 2;
     index = 1;
+    moving = 0;
 }
 
 int car::getSpeed(){
@@ -60,6 +58,15 @@ void car::setIndex(int indx){
     index = indx;
 }
 
+void car::setMoving(int flg){
+    moving = flg;
+}
+
+double calculateD(int carIndex, int getNext, int speed);
+double getSpeed(double old_clock);
+double getWaitTime(int speed);
+void carProc(car* C, int flg);
+
 //Borrowed this function to handle negative numbers
 long long int mod(long long int a, long long int b) {
     long long int ret = a % b;
@@ -77,10 +84,13 @@ extern "C" void sim(){
     for(unsigned i = 0; i < cells; i++) //Initialize D to be all 0
         D[i] = 0;
     
+    car* car1 = new car();
+    carList.push_back(car1);
+
     if(numCars != cells){
         int i;
         //for(i = 0; i < numCars; i++){ 
-            carProc(0, 1, 1);
+        carProc(car1, 1);
             //hold(2); //time between each car?
         //}
     }
@@ -89,39 +99,41 @@ extern "C" void sim(){
     
     hold(1440);
 
+    //Deallocate memory
     for(vector<car*>::iterator it = carList.begin(); it != carList.end(); it++)
         delete *it;
     carList.clear();
 }
 
-void carProc(int carMoves, int carIndex, int flg){
+void carProc(car* C, int flg){
     create("carProc");
     int speed = rand() % 5 + 2;
     double old_time = clock;
     int moving = 1;
-    int next = carIndex + 1;
+    int next = C->getIndex() + 1;
     //Initial spot reserve
-    (*road)[carIndex].reserve(); //Front
-    (*road)[carIndex - 1].reserve(); //Back
-    
+    (*road)[C->getIndex()].reserve(); //Front
+    (*road)[C->getIndex() - 1].reserve(); //Back
+
     while(clock < ENDTIME){
-        cout << "clock: " << clock << endl;
+        //cout << "clock: " << clock << endl;
         //Change speed of car every 1-2mins
         if((clock - old_time) > uniform(60, 120))
             speed = rand() % 5 + 2;
         if((*road)[next % cells].status() == 0){
-            //cout << "in" << endl;
-            carIndex = (carIndex + 1) % cells;
-            D[carIndex] = calculateD(carIndex,(carIndex + 1) % cells, speed);
-            (*road)[carIndex].reserve(); 
-            hold(D[mod(carIndex-2,cells)]);
+            //cout << "in: " << C->getIndex() << endl;
+            C->setIndex((C->getIndex() + 1) % cells);
+            D[C->getIndex()] = calculateD(C->getIndex(),(C->getIndex() + 1) % cells, speed);
+            cout << "waitfor: " << D[mod(C->getIndex()-2,cells)] << endl;
+            (*road)[C->getIndex()].reserve(); 
+            hold(D[mod(C->getIndex()-2,cells)]);
             //cout << "release : " << mod(carIndex -2, cells) << endl;
-            (*road)[mod(carIndex-2,cells)].release();
-            moving = 1;
-            next = carIndex + 1;
+            (*road)[mod(C->getIndex()-2,cells)].release();
+            C->setMoving(1);
+            next = C->getIndex() + 1;
         }
         else{
-            moving = 0;
+            C->setMoving(0); 
             speed = 0;
             old_time = clock;
         }
@@ -144,23 +156,9 @@ double calculateD(int carIndex, int getNext, int speed){
         
     }
     else{
+        cout << "here" << endl;
         return clock + getWaitTime(speed);
     }
-}
-
-double getSpeed(double old_clock){
-    double currTime = clock - old_clock;
-    if(currTime <= 3)
-        return 1;
-    else if(currTime <= (3 + 11/12))
-        return 2;
-    else if(currTime <= (5 + 5/6))
-        return 3;
-    else if(currTime <= (6 + 1/6))
-        return 4;
-    else
-        return 5;
-
 }
 
 double getWaitTime(int speed){
