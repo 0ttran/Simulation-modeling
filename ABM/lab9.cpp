@@ -46,6 +46,7 @@ BOOLEAN simulating; // Are we still going?
 
 const double profit = .025; // dollars per litre
 const double cost = 20;
+vector<double> dataAvgLitre;
 // the incremental cost in dollars to operate one pump for a day
 
 //-----------------------------------------------------------------------
@@ -144,16 +145,8 @@ public:
 class eventListClass {
 private:
 	priority_queue<eventClass*, vector<eventClass*>, compareTime> pq;
-	/*
-	struct eventListItem {
-		eventClass * data;
-		eventListItem * next;
-	};
-	eventListItem * firstEvent;
-	*/
 
 public:
-	//eventListClass () {firstEvent = NULL;};
 	eventListClass () {};
 	void insert (eventClass * event);
 	eventClass * getNext ();
@@ -163,27 +156,7 @@ eventListClass * eventList;
 
 void eventListClass::insert (eventClass * event)
 {
-	//cout << "event: " << event->whatTime() << endl;
 	pq.push(event);
-	/*
-	eventListItem * e = new eventListItem;
-	e -> data = event;
-	const double T = event -> whatTime();
-	if (firstEvent == NULL || T < firstEvent -> data -> whatTime()) {
-		e -> next = firstEvent;
-		firstEvent = e;
-	}
-	else {
-		eventListItem * behind = firstEvent;
-		eventListItem * ahead = firstEvent -> next;
-		while (ahead != NULL && ahead -> data -> whatTime() <= T) {
-			behind = ahead;
-			ahead = ahead -> next;
-		}
-		behind -> next = e;
-		e -> next = ahead;
-	}
-	*/
 }
 
 eventClass * eventListClass::getNext ()
@@ -195,18 +168,6 @@ eventClass * eventListClass::getNext ()
 	}
 	else
 		return NULL;
-	/*
-	// pre firstEvent not= NULL
-	if (firstEvent == NULL) {
-		cout << "Error! ran out of events\n";
-		return NULL;
-	}
-	eventClass * eventToReturn = firstEvent -> data;
-	eventListItem * restOfList = firstEvent -> next;
-	delete firstEvent;
-	firstEvent = restOfList;
-	return eventToReturn;
-	*/
 }
 
 //---------------------------------------------------------------------------
@@ -337,15 +298,7 @@ void pumpStandClass::releasePump (pumpClass *& P)
 class carQueueClass {
 private:
 	queue<carClass*> q;
-	/*
-	struct queueItem {
-		carClass * data;
-		queueItem * next;
-	};
-	
-	queueItem * firstWaitingCar, * lastWaitingCar;
-	int localQueueSize;
-	*/
+
 	double totalEmptyQueueTime;
 	int numCars;
 
@@ -362,11 +315,7 @@ carQueueClass * carQueue;
 
 carQueueClass::carQueueClass ()
 {
-	/*
-	firstWaitingCar = NULL;
-	lastWaitingCar = NULL;
-	localQueueSize = 0;
-	*/
+
 	numCars = 0;
 	totalEmptyQueueTime = 0.0;
 }
@@ -374,7 +323,6 @@ carQueueClass::carQueueClass ()
 int carQueueClass::queueSize ()
 {
 	return q.size();
-	//return localQueueSize;
 }
 
 double carQueueClass::emptyTime ()
@@ -387,24 +335,7 @@ double carQueueClass::emptyTime ()
 
 void carQueueClass::insert (carClass * newestCar)
 {
-	/*
-	queueItem * newQueueItem;
-	newQueueItem = new queueItem;
-	newQueueItem -> data = newestCar;
-	newQueueItem -> next = NULL;
-	
-	if (lastWaitingCar == NULL) {
-		// assert queueSize = 0
-		firstWaitingCar = newQueueItem;
-		totalEmptyQueueTime += simulationTime;
-	}
-	else {
-		// assert queueSize > 0
-		lastWaitingCar -> next = newQueueItem;
-	}
-	lastWaitingCar = newQueueItem;
-	localQueueSize += 1;
-	*/
+
 	if(q.empty()){
 		q.push(newestCar);
 		totalEmptyQueueTime += simulationTime;
@@ -420,24 +351,6 @@ void carQueueClass::insert (carClass * newestCar)
 
 carClass * carQueueClass::getNext ()
 {
-	// pre queueSize > 0 and firstWaitingCar not= NULL
-	/*
-	if (firstWaitingCar == NULL) {
-		cout << "Error! car queue unexpectedly empty\n";
-		return NULL;
-	}
-	carClass * carToReturn = firstWaitingCar -> data;
-	localQueueSize -= 1;
-	queueItem * restOfList = firstWaitingCar -> next;
-	delete firstWaitingCar;
-	firstWaitingCar = restOfList;
-	if (firstWaitingCar == NULL) {
-		// empty queue: update the pointer to the end of queue too!
-		lastWaitingCar = NULL;
-		totalEmptyQueueTime -= simulationTime;
-	}
-	return carToReturn;
-	*/
 
 	if(!q.empty()){
 		carClass* tmp = q.front();
@@ -504,16 +417,19 @@ void statsClass::accumBalk (double litres)
 }
 
 void statsClass::snapshot ()
-{
+{	
+	/*
 	printf("%8.0f%7i", simulationTime, TotalArrivals);
 	printf("%8.3f", carQueue -> emptyTime()/simulationTime);
+	*/
 	if (TotalArrivals > 0) {
+		/*
 		printf("%9.3f%8.3f", simulationTime/TotalArrivals,
 			(TotalLitresSold + TotalLitresMissed) / TotalArrivals);
+			*/
+		dataAvgLitre.push_back((TotalLitresSold + TotalLitresMissed) / TotalArrivals);
 	}
-	else
-		printf ("%9s%8s", "Unknown", "Unknown");
-
+	/*
 	printf ("%7i", balkingCustomers);
 	if (customersServed > 0)
 		printf ("%9.3f", TotalWaitingTime / customersServed);
@@ -526,6 +442,15 @@ void statsClass::snapshot ()
 	printf ("%7.2f", TotalLitresMissed * profit);
 
 	printf ("%5i\n", carQueue->getMaxCars());
+	*/
+	TotalArrivals = 0;
+	customersServed = 0;
+	balkingCustomers = 0;
+	maxCars = 0;
+	TotalLitresSold = 0.0;
+	TotalLitresMissed = 0.0;
+	TotalWaitingTime = 0.0;
+	TotalServiceTime = 0.0;
 }
 
 //-----------------------------------------
@@ -677,16 +602,23 @@ int main()
 	//---------------
 	// Initialization
 	//---------------
-
+	bool simDone = TRUE;
+	int iterCnt = 0;
 	simulationTime = 0.0;
 	simulating = TRUE;
 
-	double ReportInterval, endingTime;
+	double ReportInterval, endingTime, confInterval;
+	int numBatches;
 	cout << "Enter reporting interval: ";
 	cin >> ReportInterval;
-	cout << "Enter ending time: ";
-	cin >> endingTime;
+	cout << "Enter number of Batches: ";
+	cin >> numBatches;
 
+	endingTime = ReportInterval * numBatches;
+	/*
+	cout << "Enter a confidence interval (eg. .95): ";
+	cin >> confInterval;
+	*/
 	int numPumps;
 	cout << "Enter number of pumps: ";
 	cin >> numPumps;
@@ -711,51 +643,92 @@ int main()
 	serviceStream = new randStream (seed);
 	cout << "\n";
 
-	// Create and initialize the event queue, the car queue,
-	// and the statistical variables.
+	while(simDone){
+		// Create and initialize the event queue, the car queue,
+		// and the statistical variables.
 
-	eventList = new eventListClass;
-	carQueue = new carQueueClass;
-	stats = new statsClass;
+		eventList = new eventListClass;
+		carQueue = new carQueueClass;
+		stats = new statsClass;
 
-	// Schedule the end-of-simulation and the first progress report.
+		// Schedule the end-of-simulation and the first progress report.
 
-	allDoneClass * lastEvent = new allDoneClass (endingTime);
-	eventList -> insert (lastEvent);
-	if (ReportInterval <= endingTime) {
-		reportClass * nextReport = new reportClass (ReportInterval);
-		nextReport -> setInterval (ReportInterval);
-		eventList -> insert (nextReport);
+		allDoneClass * lastEvent = new allDoneClass (endingTime);
+		eventList -> insert (lastEvent);
+		if (ReportInterval <= endingTime) {
+			reportClass * nextReport = new reportClass (ReportInterval);
+			nextReport -> setInterval (ReportInterval);
+			eventList -> insert (nextReport);
+		}
+
+		// Schedule the first car to arrive at the start of the simulation
+
+		arrivalClass * nextArrival = new arrivalClass (0);
+			// Is 0 really the time for the first arrival?
+		eventList -> insert (nextArrival);
+		/*
+		// Print column headings for periodic progress reports and final report
+
+		printf ("%9s%7s%8s%9s%8s%7s%9s%7s%8s%7s%6s\n", " Current", "Total ",
+			"NoQueue", "Car->Car", "Average", "Number", "Average", "Pump ",
+			"Total", " Lost ", "Max");
+		printf ("%9s%7s%8s%9s%8s%7s%9s%7s%8s%7s%6s\n", "   Time ", "Cars ",
+			"Fraction", "  Time  ", " Litres ", "Balked", "  Wait ",
+			"Usage ", "Profit", "Profit", "Size");
+		for (int i = 0; i < 86; i++)
+			cout << "-";
+		cout << "\n";
+		*/
+		//------------------------
+		// The "clock driver" loop
+		//------------------------
+
+		while (simulating) {
+			eventClass * currentEvent = eventList -> getNext ();
+			simulationTime = currentEvent -> whatTime();
+			currentEvent -> makeItHappen();
+		}
+
+		//Calculate CI
+		confInterval = 1.96;
+		double mean1 = 0.0, mean2 = 0.0, dev1 = 0.0, dev2 = 0.0, stderr1, stderr2, CI1, CI2;
+		for(int i = 0; i < dataAvgLitre.size()/2; i++)
+			mean1 += dataAvgLitre.at(i);
+		
+		for(int i = dataAvgLitre.size()/2; i < dataAvgLitre.size(); i++)
+			mean2 +=dataAvgLitre.at(i);
+		
+		mean1 = mean1 / (dataAvgLitre.size()/2);
+		mean2 = mean2 / (dataAvgLitre.size() - (dataAvgLitre.size()/2));
+
+		for(int i = 0; i < dataAvgLitre.size()/2; i++)
+			dev1 += dataAvgLitre.at(i) - mean1;
+		
+		for(int i = dataAvgLitre.size()/2; i < dataAvgLitre.size(); i++)
+			dev2 += dataAvgLitre.at(i) - mean2;
+		dev1 = pow(dev1,2);
+		dev2 = pow(dev2,2);
+		dev1 = sqrt(dev1/(dataAvgLitre.size()/2));
+		dev2 = sqrt(dev2/(dataAvgLitre.size()-(dataAvgLitre.size()/2)));
+
+		stderr1 = confInterval * dev1 / sqrt(dataAvgLitre.size()/2);
+		stderr2 = confInterval * dev2 / sqrt(dataAvgLitre.size() - (dataAvgLitre.size()/2));
+		cout << "Iteration: " << iterCnt << endl;
+		cout << "Confidence Level: .95" << endl;
+		cout << "CI1: " << mean1 << " +- " << stderr1 << endl;
+		cout << "CI2: " << mean2 << " +- " << stderr2 << endl;
+
+		if(abs(mean1 - mean2) < .3){
+			simDone = FALSE;
+		}
+
+		dataAvgLitre.clear();
+		numBatches *= 2;
+		simulationTime = 0.0;
+		simulating = TRUE;
+
+		iterCnt++;
 	}
-
-	// Schedule the first car to arrive at the start of the simulation
-
-	arrivalClass * nextArrival = new arrivalClass (0);
-		// Is 0 really the time for the first arrival?
-	eventList -> insert (nextArrival);
-
-	// Print column headings for periodic progress reports and final report
-
-	printf ("%9s%7s%8s%9s%8s%7s%9s%7s%8s%7s%6s\n", " Current", "Total ",
-		"NoQueue", "Car->Car", "Average", "Number", "Average", "Pump ",
-		"Total", " Lost ", "Max");
-	printf ("%9s%7s%8s%9s%8s%7s%9s%7s%8s%7s%6s\n", "   Time ", "Cars ",
-		"Fraction", "  Time  ", " Litres ", "Balked", "  Wait ",
-		"Usage ", "Profit", "Profit", "Size");
-	for (int i = 0; i < 86; i++)
-		cout << "-";
-	cout << "\n";
-
-	//------------------------
-	// The "clock driver" loop
-	//------------------------
-
-	while (simulating) {
-		eventClass * currentEvent = eventList -> getNext ();
-		simulationTime = currentEvent -> whatTime();
-		currentEvent -> makeItHappen();
-	}
-
 	return 0;
 }
 
